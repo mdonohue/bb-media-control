@@ -19,53 +19,53 @@ import net.rim.device.api.ui.container.MainScreen;
  * A class extending the MainScreen class, which provides default standard
  * behavior for BlackBerry GUI applications.
  */
-public final class MyScreen extends MainScreen
-{
-	private int PLAYER_COUNT=6;
+public final class MyScreen extends MainScreen {
+	private int PLAYER_COUNT = 6;
 	private Player[] _players = new Player[PLAYER_COUNT];
-	/**
-	 * Creates a new MyScreen object
-	 */
-	public MyScreen()
-	{        
-		// Set the displayed title of the screen
+
+	public MyScreen() {
 		setTitle("WhatsApp Audio Test");
-		Object [] choices = new Object[PLAYER_COUNT];
-		for(int i = 0; i < PLAYER_COUNT; i++) {
+
+		Object[] choices = new Object[PLAYER_COUNT];
+		for (int i = 0; i < PLAYER_COUNT; i++) {
 			choices[i] = Integer.toString(i + 1);
 		}
+
 		final ObjectChoiceField playerIds = new ObjectChoiceField("Player", choices);
-		playerIds.setMargin(6,12,6,12);
-		final String extAmr = "amr";
-		final String extAac = "aac";
-		final String extMp3 = "mp3";
-		final ObjectChoiceField extensions = new ObjectChoiceField("Extension", new Object[] {extAmr, extAac, extMp3}, 0);
-		extensions.setMargin(6,12,6,12);
+		playerIds.setMargin(6, 12, 6, 12);
+
+		final ObjectChoiceField extensions = new ObjectChoiceField("Extension", new Object[] { "amr", "aac", "mp3" }, 0);
+		extensions.setMargin(6, 12, 6, 12);
+
 		final String directFile = "DirectFile";
 		final String inputStream = "InputStream";
-		final ObjectChoiceField loadType = new ObjectChoiceField("Load Type", new Object[] {directFile, inputStream}, 0);
-		loadType.setMargin(6,12,6,12);
-		final String playerRealize = "Realize";
-		final String playerPrefetch = "Prefetch";
-		final String playerStart = "Start";
-		final ObjectChoiceField targetState = new ObjectChoiceField("Target State", new Object[] {playerRealize, playerPrefetch, playerStart});
-		targetState.setMargin(6,12,6,12);
+
+		final ObjectChoiceField loadType = new ObjectChoiceField("Load Type", new Object[] { directFile, inputStream },
+				0);
+		loadType.setMargin(6, 12, 6, 12);
+
+		final ObjectChoiceField targetState = new ObjectChoiceField("Target State", new Object[] { "Realize",
+				"Prefetch", "Start" });
+		targetState.setMargin(6, 12, 6, 12);
+
 		ButtonField button = new ButtonField("Go", Field.FIELD_RIGHT | ButtonField.CONSUME_CLICK);
-		button.setMargin(24, 12,24,12);
+		button.setMargin(24, 12, 24, 12);
+
 		button.setRunnable(new Runnable() {
 			public void run() {
 				Thread t = new Thread(new Runnable() {
 					public void run() {
 						try {
-							Player p = getPlayer();
 							int idx = targetState.getSelectedIndex();
-							String playerTarget = (String)targetState.getChoice(idx);
-							if(playerTarget == playerRealize) {
+							String playerTarget = (String) targetState.getChoice(idx);
+
+							Player p = getPlayer();
+							if (playerTarget.equals("Realize")) {
 								p.realize();
-							} else if(playerTarget == playerPrefetch) {
+							} else if (playerTarget.equals("Prefetch")) {
 								p.realize();
 								p.prefetch();
-							} else if(playerTarget == playerStart) {
+							} else if (playerTarget.equals("Start")) {
 								p.realize();
 								p.prefetch();
 								p.start();
@@ -81,17 +81,19 @@ public final class MyScreen extends MainScreen
 				});
 				t.start();
 			}
-			private Player getPlayer()
-					throws MediaException, IOException {
+
+			private Player getPlayer() throws MediaException, IOException {
 				int extensionIdx = extensions.getSelectedIndex();
-				String extChoice = (String)extensions.getChoice(extensionIdx);
+				String extChoice = (String) extensions.getChoice(extensionIdx);
+
 				String filename = "WhatsApp-Test." + extChoice;
-				String loadTypeStr = (String)loadType.getChoice(loadType.getSelectedIndex());
+				String loadTypeStr = (String) loadType.getChoice(loadType.getSelectedIndex());
+
 				Player p;
-				if(loadTypeStr == inputStream) {
+				if (loadTypeStr == inputStream) {
 					String mimeType = "audio/" + extChoice;
 					p = createPlayerByStream(filename, mimeType);
-				} else if(loadTypeStr == directFile) {
+				} else if (loadTypeStr == directFile) {
 					p = createPlayerByFile(filename);
 				} else {
 					MyApp.getApplication().invokeLater(new Runnable() {
@@ -101,19 +103,23 @@ public final class MyScreen extends MainScreen
 					});
 					return null;
 				}
+
 				int playerSelectedIdx = playerIds.getSelectedIndex();
-				String playerIdxString = (String)playerIds.getChoice(playerSelectedIdx);
+				String playerIdxString = (String) playerIds.getChoice(playerSelectedIdx);
 				int playerIdx = Integer.parseInt(playerIdxString) - 1;
+
 				Player fromList = _players[playerIdx];
-				if(fromList != null) {
+				if (fromList != null) {
 					fromList.stop();
 					fromList.deallocate();
 					_players[playerIdx] = null;
 				}
 				_players[playerIdx] = p;
+
 				return p;
 			}
 		});
+
 		this.add(playerIds);
 		this.add(extensions);
 		this.add(loadType);
@@ -124,16 +130,16 @@ public final class MyScreen extends MainScreen
 	public static Player createPlayerByFile(String filename) throws MediaException, IOException {
 		final String mediaRoot = "file:///store/home/user/voicenotes/";
 		String fullFilename = mediaRoot + filename;
-		FileConnection fConn = (FileConnection)Connector.open(fullFilename);
-		if(!fConn.exists()) {
+		FileConnection fConn = (FileConnection) Connector.open(fullFilename);
+		if (!fConn.exists()) {
 			fConn.create();
 		}
-		if(fConn.fileSize() == 0) {
+		if (fConn.fileSize() == 0) {
 			OutputStream os = fConn.openOutputStream();
-			InputStream is = MyScreen.class.getResourceAsStream("/audio/"+filename);
-			byte [] buf = new byte[8192];
+			InputStream is = MyScreen.class.getResourceAsStream("/audio/" + filename);
+			byte[] buf = new byte[8192];
 			int readSize = 0;
-			while((readSize = is.read(buf, 0, buf.length)) != -1) {
+			while ((readSize = is.read(buf, 0, buf.length)) != -1) {
 				os.write(buf, 0, readSize);
 			}
 			os.close();
@@ -145,7 +151,6 @@ public final class MyScreen extends MainScreen
 
 	public static Player createPlayerByStream(String filename, String mimeType) throws MediaException, IOException {
 		InputStream inputStream = MyScreen.class.getResourceAsStream("/audio/" + filename);
-		return javax.microedition.media.Manager.createPlayer(
-				inputStream, mimeType);
+		return javax.microedition.media.Manager.createPlayer(inputStream, mimeType);
 	}
 }
